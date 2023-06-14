@@ -15,44 +15,67 @@ export default function EventPage({ evt }) {
 
   return (
     <Layout>
-      <div className={styles.event}>
-        <div className={styles.control}>
-          <Link href={`/events/edit/${evt.id}`}>
-            <FaPencilAlt /> Edit Event
-          </Link>
-          <a href="#" className={styles.delete} onClick={deleteEvent}>
-            <FaTimes />
-            Delete Event
-          </a>
-        </div>
-        <span>
-          {evt.date} at {evt.time}
-          <h1>{evt.name}</h1>
-          {evt.image && (
+      {evt === null ? (
+        <h3>No Events Detail</h3>
+      ) : (
+        <div className={styles.event}>
+          <div className={styles.control}>
+            <Link href={`/events/edit/${evt.id}`}>
+              <FaPencilAlt /> Edit Event
+            </Link>
+            <a href="#" className={styles.delete} onClick={deleteEvent}>
+              <FaTimes />
+              Delete Event
+            </a>
+          </div>
+          <span>
+            {new Date(evt.attributes.date).toLocaleDateString('en-US')} at {evt.attributes.time}
+            <h1>{evt.attributes.name}</h1>
             <div className={styles.image}>
-              <Image src={evt.image} width={960} height={600} />
+              <Image
+                src={
+                  evt.attributes.image
+                    ? evt.attributes.image.data.attributes.formats.medium.url
+                    : "/images/event-default.png"
+                }
+                width={960}
+                height={600}
+              />
             </div>
-          )}
-          <h3>Performers:</h3>
-          <p>{evt.performers}</p>
-          <h3>Description:</h3>
-          <p>{evt.description}</p>
-          <h3>Venue: {evt.venue}</h3>
-          <p>{evt.address}</p>
-          <Link className={styles.back} href="/events">
-            {"<"} Go Back
-          </Link>
-        </span>
+            <h3>Performers:</h3>
+            <p>{evt.attributes.performers}</p>
+            <h3>Description:</h3>
+            <p>{evt.attributes.description}</p>
+            <h3>Venue: {evt.attributes.venue}</h3>
+            <p>{evt.attributes.address}</p>
+          </span>
+        </div>
+      )}
+      <div>
+        <Link className={styles.back} href="/events">
+          {"<"} Go Back
+        </Link>
       </div>
     </Layout>
   );
 }
 
 export async function getServerSideProps({ query: { slug } }) {
-  const res = await fetch(`${API_URL}/api/events/${slug}`);
-  const events = await res.json();
+  let evt = null;
+  console.log(`Slug ${slug}`);
+  try {
+    const res = await fetch(
+      `${API_URL}/api/events?filters[slug]=${slug}&populate=*`
+    );
+    const body = await res.json();
+    evt = body.data[0];
+    console.log(evt);
+  } catch (e) {
+    console.error("Failured occurred:");
+    console.error(e);
+  }
 
   return {
-    props: { evt: events[0] },
+    props: { evt },
   };
 }
