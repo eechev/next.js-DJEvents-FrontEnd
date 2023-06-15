@@ -6,17 +6,38 @@ import Link from "next/link";
 import Layout from "@/components/Layout";
 import { API_URL } from "@/config/index";
 import styles from "@/styles/Form.module.css";
+import moment from "moment/moment";
+import Image from "next/image";
+import { FaImage } from "react-icons/fa";
+import Modal from "@/components/Modal";
+import ImageUpload from "@/components/ImageUpload";
 
-export default function AddEventPage() {
+export default function EditEventPage({ evt }) {
   const [values, setValues] = useState({
-    name: "",
-    performers: "",
-    venue: "",
-    address: "",
-    date: "",
-    time: "",
-    description: "",
+    name: evt.attributes.name,
+    performers: evt.attributes.performers,
+    venue: evt.attributes.venue,
+    address: evt.attributes.address,
+    date: evt.attributes.date,
+    time: evt.attributes.time,
+    description: evt.attributes.description,
   });
+
+  const [imagePreview, setImagePreview] = useState(
+    evt.attributes.image.data
+      ? evt.attributes.image.data.attributes.formats.thumbnail.url
+      : null
+  );
+
+  const [showModal, setShowModal] = useState(false);
+
+  const imageUploaded = async (e) => {
+    console.log("Image Uploaded... Retreiving data");
+    const res = await fetch(`${API_URL}/api/events/${evt.id}`);
+    const data = await res.json();
+    setImagePreview(data.image.data.attributes.formats.thumbnail.url);
+    setShowModal(false);
+  };
 
   const router = useRouter();
 
@@ -34,8 +55,8 @@ export default function AddEventPage() {
       try {
         //an improvement is to check if the name already exist before posting
         const data = { data: values };
-        const res = await fetch(`${API_URL}/api/events`, {
-          method: "POST",
+        const res = await fetch(`${API_URL}/api/events/${evt.id}`, {
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
@@ -43,7 +64,6 @@ export default function AddEventPage() {
         });
 
         if (!res.ok) {
-          
           if (res.status === 403 || res.status === 401) {
             toast.error("No token included");
             return;
@@ -66,9 +86,9 @@ export default function AddEventPage() {
   };
 
   return (
-    <Layout title="Add New Event">
+    <Layout title="Edit Event">
       <Link href="/events">Go Back</Link>
-      <h1>Add Event</h1>
+      <h1>Edit Event</h1>
       <ToastContainer />
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.grid}>
@@ -118,7 +138,7 @@ export default function AddEventPage() {
               type="date"
               name="date"
               id="date"
-              value={values.date}
+              value={moment(values.date).format("yyyy-MM-DD")}
               onChange={handleInputChange}
             />
           </div>
@@ -145,8 +165,40 @@ export default function AddEventPage() {
           ></textarea>
         </div>
 
-        <input type="submit" value="Add Event" className="btn" />
+        <input type="submit" value="Update Event" className="btn" />
       </form>
+      <h2>Event Image:</h2>
+      {imagePreview ? (
+        <Image src={imagePreview} height={100} width={170} />
+      ) : (
+        <div>
+          <p>No image uploaded...</p>
+        </div>
+      )}
+      <div>
+        <button className="btn-secondary" onClick={() => setShowModal(true)}>
+          <FaImage /> Set Image
+        </button>
+      </div>
+      <Modal show={showModal} onClose={() => setShowModal(false)}>
+        <ImageUpload evtId={evt.Id} imageUploaded={imageUploaded} />
+      </Modal>
     </Layout>
   );
+}
+
+export async function getServerSideProps({ params: { id } }) {
+  let evt = null;
+  try {
+    const res = await fetch(`${API_URL}/api/events/${id}?populate=*`);
+    const body = await res.json();
+    evt = body.data;
+  } catch (e) {
+    console.error("Failured occurred:");
+    console.error(e);
+  }
+
+  return {
+    props: { evt },
+  };
 }
