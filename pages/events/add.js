@@ -152,7 +152,7 @@ export default function AddEventPage({ token }) {
 }
 
 export async function getServerSideProps({ req }) {
-  const token = parseCookies(req);
+  const token  = parseCookies(req);
 
   return { props: token };
 }
