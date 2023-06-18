@@ -10,10 +10,25 @@ import AuthContext from "@/context/AuthContext";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { login, error } = useContext(AuthContext);
+  const { login, error, clearError } = useContext(AuthContext);
+
+  useEffect(() => {
+    console.log("LoginPage:: Error set to: ");
+    console.log(error);
+    if(error) {
+      toast.error(error);
+      clearError();
+    }
+  });
 
   const handleSubmit = (e) => {
+
     e.preventDefault();
+    if (email === "" || password === "") {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
     login({ email, password });
   };
 

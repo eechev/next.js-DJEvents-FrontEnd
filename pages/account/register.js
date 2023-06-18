@@ -8,22 +8,42 @@ import styles from "@/styles/AuthForm.module.css";
 import AuthContext from "@/context/AuthContext";
 
 export default function RegisterPage() {
-  const [userName, setUserName] = useState("");
+  const [username, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
 
-  const { register, error } = useContext(AuthContext);
+  const { register, error, clearError } = useContext(AuthContext);
+
+  useEffect(() => {
+    console.log('RegisterPage: Error set to')
+    console.log(error);
+    if (error) {
+      toast.error(error)
+      clearError();
+    }
+    return undefined;
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (
+      username === "" ||
+      email === "" ||
+      password === "" ||
+      passwordConfirm === ""
+    ) {
+      toast.error("Please fill in all fields");
+      return;
+    }
 
     if (password !== passwordConfirm) {
       toast.error("Passwords do not match!");
       return;
     }
 
-    register({ userName, email, password });
+    register({ username, email, password });
   };
 
   return (
@@ -36,11 +56,11 @@ export default function RegisterPage() {
         <ToastContainer />
         <form onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="userName">UserName:</label>
+            <label htmlFor="username">User Name:</label>
             <input
               type="test"
-              name="userName"
-              value={userName}
+              name="username"
+              value={username}
               onChange={(e) => setUserName(e.target.value)}
             />
           </div>
